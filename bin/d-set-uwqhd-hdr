@@ -11,7 +11,7 @@ RESOLUTION_MODE="5120x1440@240"
 kscreen-doctor "output.${MONITOR_INDEX}.enable"
 kscreen-doctor "output.${TV_INDEX}.disable"
 kscreen-doctor "output.${VIDEO_OUTPUT}.mode.${RESOLUTION_MODE}"
-kscreen-doctor "output.${MONITOR_INDEX}.hdr.enabled"
+kscreen-doctor "output.${MONITOR_INDEX}.hdr.enable"
 
 AUDIO_SINK=$(pactl list short sinks | grep -E "pci-.*iec958-stereo*" | awk '{print $2}' | head -n 1)
 pactl set-default-sink "$AUDIO_SINK"

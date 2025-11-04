@@ -1,21 +1,24 @@
-# Tout ignorer par défaut
+# Ignore all files
 /*
 
-# Toujours garder ce fichier
+# Except .gitignore
 !.gitignore
 
+# Except bash configuration files
 !.bashrc
 !.bash_logout
 !.bash_profile
 
+# Except bin folder
 !bin/
 
-# Garder le dossier .config (sinon Git ne peut pas descendre dedans)
+# Set a temporary exception on the .config folder (otherwise Git can’t go down into it)
 !.config/
 
-# Ignorer tout ce qu’il y a DANS .config/
+# Then Ignore everything inside in .config/
 .config/*
 
+# Except specific configuration files and folders
 !.config/gamemode.ini
 !.config/scopebuddy/
 !.config/MangoHud/
