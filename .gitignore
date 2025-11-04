@@ -1,0 +1,23 @@
+# Tout ignorer par défaut
+/*
+
+# Toujours garder ce fichier
+!.gitignore
+
+!.bashrc
+!.bash_logout
+!.bash_profile
+
+!bin/
+
+# Garder le dossier .config (sinon Git ne peut pas descendre dedans)
+!.config/
+
+# Ignorer tout ce qu’il y a DANS .config/
+.config/*
+
+!.config/gamemode.ini
+!.config/scopebuddy/
+!.config/MangoHud/
+!.config/htop/
+!.config/corectrl/

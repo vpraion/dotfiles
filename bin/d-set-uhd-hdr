@@ -1,0 +1,19 @@
+#!/bin/bash
+
+setsid steam steam://open/bigpicture
+
+VIDEO_OUTPUT="DP-2"
+TV_OUTPUT="HDMI-A-2"
+MONITOR_INDEX=$(kscreen-doctor -o | grep "Output:.*$VIDEO_OUTPUT" | awk '{print $3}')
+TV_INDEX=$(kscreen-doctor -o | grep "Output:.*$TV_OUTPUT" | awk '{print $3}')
+RESOLUTION_MODE="3840x2160@120"
+
+kscreen-doctor "output.${TV_INDEX}.enable"
+kscreen-doctor "output.${MONITOR_INDEX}.disable"
+kscreen-doctor "output.${TV_OUTPUT_OUTPUT}.mode.${RESOLUTION_MODE}"
+kscreen-doctor "output.${TV_INDEX}.hdr.enable"
+
+AUDIO_SINK=$(pactl list short sinks | grep -E "pci-.*hdmi-stereo*" | awk '{print $2}' | head -n 1)
+pactl set-default-sink "$AUDIO_SINK"
+
+cp $HOME/.config/scopebuddy/uhd-hdr.conf $HOME/.config/scopebuddy/scb.conf
