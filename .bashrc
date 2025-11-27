@@ -11,4 +11,7 @@ PS1='[\u@\h \W]\$ '
 
 PATH=$PATH:$HOME/bin
 
+HISTSIZE=5000
+HISTFILESIZE=10000
+
 fastfetch
