@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+echo "[INFO] Restarting plasmashell..."
+killall plasmashell 2>/dev/null || true
+kstart5 plasmashell &
+
+echo "[INFO] Restarting kwin_wayland..."
+kwin_wayland --replace &
+
+echo "[DONE] Plasma 6 (Wayland) restarted."

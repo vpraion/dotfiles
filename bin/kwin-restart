@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+if pgrep kwin_wayland >/dev/null; then
+    echo "[INFO] Wayland détected, restarting kwin_wayland..."
+    pkill -9 kwin_wayland
+    kwin_wayland --replace &>/dev/null &
+fi
+
+echo "[INFO] KWin restarted."
