@@ -123,86 +123,63 @@ fi
 get_video_bitrate_kbps() {
   local file="$1"
 
-  # 1) MKV TAG "BPS" (exact video stream bitrate)
-  local bps_tag
-  bps_tag=$(ffprobe -v error \
-    -select_streams v:0 \
-    -show_entries stream_tags=BPS \
+  # 1) Duration in seconds (float)
+  local duration
+  duration=$(ffprobe -v error \
+    -show_entries format=duration \
     -of csv=p=0 \
-    "$file" 2>/dev/null || true)
+    "$file" 2>/dev/null)
 
-  if [[ -n "$bps_tag" && "$bps_tag" != "N/A" ]]; then
-    echo $(( bps_tag / 1000 ))
+  duration=${duration%%,*}  # remove trailing CSV stuff
+
+  if [[ -z "$duration" || "$duration" == "N/A" || "$duration" == "0" ]]; then
+    echo ""
     return
   fi
 
-  # 2) Recalculate using bytes + duration
-  local bytes duration_sec
-
-  bytes=$(ffprobe -v error \
-    -select_streams v:0 \
-    -show_entries stream_tags=NUMBER_OF_BYTES \
-    -of csv=p=0 \
-    "$file" 2>/dev/null || true)
-
-  duration_sec=$(ffprobe -v error \
-    -select_streams v:0 \
-    -show_entries stream_tags=DURATION \
-    -of csv=p=0 \
-    "$file" 2>/dev/null || true)
-
-  if [[ -n "$bytes" && -n "$duration_sec" && "$bytes" != "N/A" && "$duration_sec" != "N/A" ]]; then
-    local kbps
-    kbps=$(awk -v bytes="$bytes" -v dur="$duration_sec" \
-      'BEGIN { if (dur > 0) printf "%d", (bytes*8/1000)/dur; }')
-
-    if [[ -n "$kbps" ]]; then
-      echo "$kbps"
-      return
-    fi
+  # 2) File size in bytes
+  local size
+  size=$(stat -c%s "$file" 2>/dev/null || echo "")
+  if [[ -z "$size" || "$size" == "0" ]]; then
+    echo ""
+    return
   fi
 
-  # 3) Direct bitrate field
-  local vbits
-  vbits=$(ffprobe -v error \
-    -select_streams v:0 \
+  # 3) Total bitrate (all streams) in kb/s
+  local total_kbps
+  total_kbps=$(awk -v size="$size" -v dur="$duration" \
+    'BEGIN { if (dur > 0) printf "%d", ((size*8)/1000)/dur; }')
+
+  if [[ -z "$total_kbps" || "$total_kbps" == "0" ]]; then
+    echo ""
+    return
+  fi
+
+  # 4) Sum of audio bitrates (if available)
+  local audio_bits
+  audio_bits=$(ffprobe -v error \
+    -select_streams a \
     -show_entries stream=bit_rate \
     -of csv=p=0 \
-    "$file" 2>/dev/null || true)
+    "$file" 2>/dev/null \
+    | awk 'NF && $1 != "N/A" { s+=$1 } END { print s+0 }')
 
-  if [[ -n "$vbits" && "$vbits" != "N/A" ]]; then
-    echo $(( vbits / 1000 ))
-    return
-  fi
+  if [[ -n "$audio_bits" && "$audio_bits" -gt 0 ]]; then
+    local audio_kbps
+    audio_kbps=$(awk -v ab="$audio_bits" 'BEGIN { printf "%d", ab/1000 }')
 
-  # 4) Fallback: total - audio
-  local total_bits audio_bits
+    local video_kbps=$(( total_kbps - audio_kbps ))
 
-  total_bits=$(ffprobe -v error \
-    -show_entries format=bit_rate \
-    -of csv=p=0 \
-    "$file" 2>/dev/null || true)
-
-  if [[ -n "$total_bits" && "$total_bits" != "N/A" ]]; then
-    audio_bits=$(ffprobe -v error \
-      -select_streams a \
-      -show_entries stream=bit_rate \
-      -of csv=p=0 \
-      "$file" 2>/dev/null \
-      | awk 'NF && $1 != "N/A" { s+=$1 } END { print s+0 }')
-
-    if (( audio_bits > 0 )); then
-      echo $(( (total_bits - audio_bits)/1000 ))
-      return
-    else
-      echo $(( total_bits / 1000 ))
+    if (( video_kbps > 0 )); then
+      echo "$video_kbps"
       return
     fi
   fi
 
-  # 5) Unable to determine
-  echo ""
+  # Fallback: if audio bitrate not available, return total
+  echo "$total_kbps"
 }
+
 
 # Retrieve width & height (pixels)
 get_video_dimensions() {
