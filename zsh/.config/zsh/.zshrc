@@ -1,3 +1,4 @@
+#!/usr/bin/env zsh
 # History
 
 HISTFILE="$XDG_STATE_HOME/zsh/history" # Defines where history file is located
@@ -67,6 +68,9 @@ source "$ZDOTDIR/prompt.zsh"
 
 # zoxide functions
 source "$ZDOTDIR/zoxide.zsh"
+
+# Background Git auto-fetch
+source "$ZDOTDIR/git-fetch.zsh"
 
 # Custom keybindngs
 source "$ZDOTDIR/bindings.zsh"
