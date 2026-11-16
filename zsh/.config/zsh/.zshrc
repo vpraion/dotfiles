@@ -56,6 +56,9 @@ source "$ZDOTDIR/fzf.zsh"
 # Aliases
 source "$ZDOTDIR/aliases.zsh"
 
+# Help and interactive alias finder (al)
+source "$ZDOTDIR/help.zsh"
+
 # Plugins and plugin manager
 source "$ZDOTDIR/plugins.zsh"
 
