@@ -35,6 +35,7 @@ check_dep "eza" "eza"
 check_dep "rg" "ripgrep"
 check_dep "zoxide" "zoxide"
 check_dep "nvim" "nvim"
+check_dep "starship" "starship"
 check_dep "col" "col"
 
 if [ -z "$MISSING_CORE" ]; then

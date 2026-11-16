@@ -55,23 +55,24 @@ Each top-level directory mirrors the destination layout relative to `$HOME`:
 
 ### Core (Required)
 
-| Tool | Purpose |
-| :--- | :--- |
-| [zsh](https://www.zsh.org/) | Primary shell |
-| [git](https://git-scm.com/) | Version control |
-| [stow](https://www.gnu.org/software/stow/) | Symlink manager |
-| [fzf](https://github.com/junegunn/fzf) | Fuzzy finder |
-| [fd](https://github.com/sharkdp/fd) | Fast `find` alternative |
-| [bat](https://github.com/sharkdp/bat) | Syntax-highlighted cat and man pager |
-| [eza](https://github.com/eza-community/eza) | Modern `ls` replacement |
-| [ripgrep](https://github.com/burntsushi/ripgrep) | Fast `grep` replacement |
-| [zoxide](https://github.com/ajeetdsouza/zoxide) | Smarter directory navigation |
-| [nvim](https://neovim.io/) | Text editor |
-| [col](https://linuxcommandlibrary.com/man/col) | Utlized by `MANPAGER` configuration |
+| Tool                                             | Purpose                              |
+| :----------------------------------------------- | :----------------------------------- |
+| [zsh](https://www.zsh.org/)                      | Primary shell                        |
+| [git](https://git-scm.com/)                      | Version control                      |
+| [stow](https://www.gnu.org/software/stow/)       | Symlink manager                      |
+| [fzf](https://github.com/junegunn/fzf)           | Fuzzy finder                         |
+| [fd](https://github.com/sharkdp/fd)              | Fast `find` alternative              |
+| [bat](https://github.com/sharkdp/bat)            | Syntax-highlighted cat and man pager |
+| [eza](https://github.com/eza-community/eza)      | Modern `ls` replacement              |
+| [ripgrep](https://github.com/burntsushi/ripgrep) | Fast `grep` replacement              |
+| [zoxide](https://github.com/ajeetdsouza/zoxide)  | Smarter directory navigation         |
+| [nvim](https://neovim.io/)                       | Text editor                          |
+| [starship](https://starship.rs/)                 | Cross-shell customizable prompt      |
+| [col](https://linuxcommandlibrary.com/man/col)   | Utilized by `MANPAGER` configuration |
 ### Optional
 
-| Tool | Purpose |
-| :--- | :--- |
+| Tool                                      | Purpose                           |
+| :---------------------------------------- | :-------------------------------- |
 | [kitty](https://sw.kovidgoyal.net/kitty/) | GPU-accelerated terminal emulator |
 
 ---
