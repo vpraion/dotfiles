@@ -1,0 +1,69 @@
+#!/bin/sh
+
+# Path to the file containing the commit message
+COMMIT_MSG_FILE="$1"
+
+if [ -z "$COMMIT_MSG_FILE" ] || [ ! -f "$COMMIT_MSG_FILE" ]; then
+    exit 0
+fi
+
+# Run repository-specific hook if it exists and is executable
+# (core.hooksPath overrides repo-level hooks by default, so we chain manually)
+if [ -n "$GIT_DIR" ] && [ -f "$GIT_DIR/hooks/commit-msg" ] && [ -x "$GIT_DIR/hooks/commit-msg" ]; then
+    CURRENT_HOOK="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+    REPO_HOOK="$(cd "$(dirname "$GIT_DIR/hooks/commit-msg")" && pwd)/commit-msg"
+    if [ "$CURRENT_HOOK" != "$REPO_HOOK" ]; then
+        "$GIT_DIR/hooks/commit-msg" "$@" || exit $?
+    fi
+fi
+
+# Read the first non-empty, non-comment line
+FIRST_LINE="$(grep -v '^[[:space:]]*#' "$COMMIT_MSG_FILE" | grep -v '^[[:space:]]*$' | head -n 1)"
+
+# Allow empty commits (git will handle or reject them)
+if [ -z "$FIRST_LINE" ]; then
+    exit 0
+fi
+
+# Allow merge, revert, fixup, amend, and squash commits
+case "$FIRST_LINE" in
+    Merge*|"Merge "*|"Revert "*|fixup!*|squash!*|amend!*)
+        exit 0
+        ;;
+esac
+
+# Conventional Commits regex pattern:
+# <type>(<scope>)?: <subject>
+# or <type>(<scope>)?!: <subject>
+CONVENTIONAL_PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_./-]+\))?!?: [^[:space:]].+'
+
+if ! printf "%s\n" "$FIRST_LINE" | grep -E -q "$CONVENTIONAL_PATTERN"; then
+    RED='\033[0;31m'
+    YELLOW='\033[0;33m'
+    BOLD='\033[1m'
+    RESET='\033[0m'
+
+    # If stdout/stderr is not a tty, don't use colors
+    if [ ! -t 1 ] && [ ! -t 2 ]; then
+        RED=''
+        YELLOW=''
+        BOLD=''
+        RESET=''
+    fi
+
+    printf "\n${RED}${BOLD}[ERROR] Invalid commit message format!${RESET}\n" >&2
+    printf "Your commit message:\n" >&2
+    printf "  ${YELLOW}%s${RESET}\n\n" "$FIRST_LINE" >&2
+    printf "It must follow the ${BOLD}Conventional Commits${RESET} specification:\n" >&2
+    printf "  ${BOLD}<type>(<optional-scope>): <description>${RESET}\n\n" >&2
+    printf "Allowed types:\n" >&2
+    printf "  feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert\n\n" >&2
+    printf "Examples:\n" >&2
+    printf "  feat(auth): implement oauth2 login\n" >&2
+    printf "  fix: resolve memory leak in worker loop\n" >&2
+    printf "  docs: update setup instructions in README\n" >&2
+    printf "  feat(api)!: drop deprecated v1 endpoints\n\n" >&2
+    exit 1
+fi
+
+exit 0

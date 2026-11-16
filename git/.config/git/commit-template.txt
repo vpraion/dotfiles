@@ -1,0 +1,20 @@
+# <type>(<scope>): <subject>
+#
+# Types:
+#   feat     (new feature)
+#   fix      (bug fix)
+#   docs     (documentation only)
+#   style    (formatting, white-space, etc; no code change)
+#   refactor (refactoring production code)
+#   perf     (code change that improves performance)
+#   test     (adding or refactoring tests)
+#   build    (build system, dependencies, toolchain)
+#   ci       (continuous integration scripts / configs)
+#   chore    (maintenance tasks, bump deps; no production code change)
+#   revert   (reverting a previous commit)
+#
+# Scope:
+#   Optional context (e.g. auth, config, cli, api)
+#
+# Breaking Change:
+#   Add '!' before the colon, e.g.: feat(api)!: drop support for python 2

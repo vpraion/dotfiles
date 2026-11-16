@@ -1,0 +1,152 @@
+#!/bin/sh
+
+# Run repository-specific hook if it exists and is executable
+# (core.hooksPath overrides repo-level hooks by default, so we chain manually)
+if [ -n "$GIT_DIR" ] && [ -f "$GIT_DIR/hooks/pre-commit" ] && [ -x "$GIT_DIR/hooks/pre-commit" ]; then
+    CURRENT_HOOK="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+    REPO_HOOK="$(cd "$(dirname "$GIT_DIR/hooks/pre-commit")" && pwd)/pre-commit"
+    if [ "$CURRENT_HOOK" != "$REPO_HOOK" ]; then
+        "$GIT_DIR/hooks/pre-commit" "$@" || exit $?
+    fi
+fi
+
+# Track any detected warnings
+WARNINGS_COUNT=0
+
+warn() {
+    WARNINGS_COUNT=$((WARNINGS_COUNT + 1))
+}
+
+# Setup terminal colors
+if [ -t 1 ] || [ -e /dev/tty ]; then
+    RED='\033[0;31m'
+    YELLOW='\033[0;33m'
+    BOLD='\033[1m'
+    RESET='\033[0m'
+else
+    RED=''
+    YELLOW=''
+    BOLD=''
+    RESET=''
+fi
+
+print_header() {
+    printf "\n${YELLOW}${BOLD}⚠️  Git Pre-Commit Warnings Detected:${RESET}\n\n" >&2
+}
+
+# 1. Check for unresolved merge conflict markers
+CONFLICT_LINES="$(git diff --cached -U0 2>/dev/null | grep -E '^\+[<>=]{7}( |$)')"
+if [ -n "$CONFLICT_LINES" ]; then
+    [ $WARNINGS_COUNT -eq 0 ] && print_header
+    warn
+    printf "${RED}[!] Unresolved merge conflict markers found:${RESET}\n" >&2
+    printf "%s\n\n" "$CONFLICT_LINES" >&2
+fi
+
+# 2. Check for private keys in staged content
+PRIVATE_KEYS="$(git diff --cached 2>/dev/null | grep -E '^\+.*-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----')"
+if [ -n "$PRIVATE_KEYS" ]; then
+    [ $WARNINGS_COUNT -eq 0 ] && print_header
+    warn
+    printf "${RED}[!] Potential private key detected in staged diff:${RESET}\n" >&2
+    printf "%s\n\n" "$PRIVATE_KEYS" >&2
+fi
+
+# 3. Check for newly added sensitive filenames (.env, id_rsa, *.pem, *.key)
+# Only warns on initial addition (or re-addition if previously deleted from branch)
+SENSITIVE_FILES=""
+NEWLY_ADDED_FILES="$(git diff --cached --name-only --diff-filter=A 2>/dev/null)"
+
+if [ -n "$NEWLY_ADDED_FILES" ]; then
+    for file in $NEWLY_ADDED_FILES; do
+        basename="$(basename "$file")"
+        case "$basename" in
+            *.pem|*.key|*.pfx|*.p12|id_rsa*|id_ed25519*|id_ecdsa*)
+                SENSITIVE_FILES="${SENSITIVE_FILES}  - $file\n"
+                ;;
+            .env|.env.*)
+                # Ignore safe template/sample env files
+                case "$basename" in
+                    *.example|*.sample|*.template|*.dist)
+                        ;;
+                    *)
+                        SENSITIVE_FILES="${SENSITIVE_FILES}  - $file\n"
+                        ;;
+                esac
+                ;;
+        esac
+    done
+fi
+
+if [ -n "$SENSITIVE_FILES" ]; then
+    [ $WARNINGS_COUNT -eq 0 ] && print_header
+    warn
+    printf "${RED}[!] Sensitive or environment files staged for addition:${RESET}\n" >&2
+    printf "$SENSITIVE_FILES\n" >&2
+fi
+
+# 4. Check for large files staged (> 10 MB = 10485760 bytes)
+# Only warns if the file is new or was < 10 MB in HEAD
+MAX_SIZE=10485760
+LARGE_FILES=""
+STAGED_FILES="$(git diff --cached --name-only --diff-filter=d 2>/dev/null)"
+
+if [ -n "$STAGED_FILES" ]; then
+    while IFS= read -r file; do
+        [ -z "$file" ] && continue
+        blob_sha="$(git ls-files -s -- "$file" 2>/dev/null | awk '{print $2}')"
+        if [ -n "$blob_sha" ]; then
+            size="$(git cat-file -s "$blob_sha" 2>/dev/null || echo 0)"
+            if [ "$size" -gt "$MAX_SIZE" ]; then
+                # Check if it was already large in HEAD (if so, user already accepted it)
+                head_sha="$(git rev-parse "HEAD:$file" 2>/dev/null)"
+                head_size=0
+                [ -n "$head_sha" ] && head_size="$(git cat-file -s "$head_sha" 2>/dev/null || echo 0)"
+
+                if [ "$head_size" -le "$MAX_SIZE" ]; then
+                    size_mb=$((size / 1048576))
+                    LARGE_FILES="${LARGE_FILES}  - $file (${size_mb} MB)\n"
+                fi
+            fi
+        fi
+    done <<EOF
+$STAGED_FILES
+EOF
+fi
+
+if [ -n "$LARGE_FILES" ]; then
+    [ $WARNINGS_COUNT -eq 0 ] && print_header
+    warn
+    printf "${YELLOW}[!] Large file(s) staged (> 10 MB):${RESET}\n" >&2
+    printf "$LARGE_FILES\n" >&2
+fi
+
+# If warnings were found, ask user for confirmation interactively
+if [ "$WARNINGS_COUNT" -gt 0 ]; then
+    if [ -t 0 ]; then
+        printf "${BOLD}Do you still want to commit these changes? [y/N] ${RESET}" >&2
+        read -r CONFIRM
+    elif [ -c /dev/tty ]; then
+        exec < /dev/tty
+        printf "${BOLD}Do you still want to commit these changes? [y/N] ${RESET}" >&2
+        read -r CONFIRM
+    else
+        # Non-interactive session: fail safely
+        printf "${RED}Non-interactive terminal detected with active warnings. Aborting commit.${RESET}\n" >&2
+        printf "Use 'git commit --no-verify' to bypass this check.\n\n" >&2
+        exit 1
+    fi
+
+    case "$CONFIRM" in
+        [yY]|[yY][eE][sS])
+            printf "${YELLOW}Proceeding with commit...${RESET}\n\n" >&2
+            exit 0
+            ;;
+        *)
+            printf "\n${RED}Commit aborted by user.${RESET}\n\n" >&2
+            exit 1
+            ;;
+    esac
+fi
+
+exit 0
