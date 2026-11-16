@@ -39,6 +39,8 @@ check_dep "starship" "starship"
 check_dep "kitty" "kitty"
 check_dep "ffprobe" "ffmpeg"
 check_dep "col" "col"
+check_dep "mdcat" "mdcat"
+
 
 if [ -z "$MISSING_CORE" ]; then
     printf "${GREEN}${BOLD}✓ All required dependencies are installed.${RESET}\n"

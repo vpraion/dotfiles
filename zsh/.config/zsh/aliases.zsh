@@ -35,6 +35,9 @@ alias vim='nvim'
 # [vim] Open Neovim editor
 alias vi='vim'
 
+# [mdcat -p --margin --emoji] View rendered markdown file
+alias mdcat='mdcat -p --margin --emoji'
+
 # Git
 
 # Status
