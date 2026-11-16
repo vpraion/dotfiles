@@ -30,3 +30,42 @@ _fzf_file_no_hidden() {
 }
 zle -N _fzf_file_no_hidden
 bindkey '^F' _fzf_file_no_hidden
+
+# Find In Files: interactive grep using ripgrep, fzf and bat preview
+fif() {
+  local target_dir="${1:-.}"
+  local selection file line
+
+  selection=$(rg --color=always --line-number --no-heading --smart-case "" "$target_dir" 2>/dev/null |
+    fzf --ansi \
+        --delimiter=':' \
+        --preview='bat --color=always --style=numbers --highlight-line {2} {1}' \
+        --preview-window='right:60%:+{2}-5' \
+        --prompt='Search text > ')
+
+  if [[ -n "$selection" ]]; then
+    file=$(echo "$selection" | cut -d: -f1)
+    line=$(echo "$selection" | cut -d: -f2)
+    ${EDITOR:-nvim} "+$line" "$file"
+  fi
+}
+
+# Ctrl+G: interactive ripgrep file content search
+_fzf_grep() {
+  local selection file line
+  selection=$(rg --color=always --line-number --no-heading --smart-case "" . 2>/dev/null |
+    fzf --ansi \
+        --delimiter=':' \
+        --preview='bat --color=always --style=numbers --highlight-line {2} {1}' \
+        --preview-window='right:60%:+{2}-5' \
+        --prompt='Grep > ')
+
+  if [[ -n "$selection" ]]; then
+    file=$(echo "$selection" | cut -d: -f1)
+    line=$(echo "$selection" | cut -d: -f2)
+    ${EDITOR:-nvim} "+$line" "$file"
+  fi
+  zle reset-prompt
+}
+zle -N _fzf_grep
+

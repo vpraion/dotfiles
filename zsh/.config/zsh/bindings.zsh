@@ -24,6 +24,9 @@ zvm_after_init() {
 	# Ctrl+F -> fzf file picker (no hidden files)
 	bindkey '^F' _fzf_file_no_hidden
 
+	# Ctrl+G -> fzf ripgrep interactive content search
+	bindkey '^G' _fzf_grep
+
 	# Ctrl+\ -> toggle autosuggestions
 	bindkey '^\' autosuggest-toggle
 
