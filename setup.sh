@@ -78,9 +78,10 @@ EOF
     fi
 fi
 
-# 3. Check for existing directories or files in $HOME that would be overridden/linked
+# 3. Check for existing directories or conflicting files in $HOME
 printf "\n${BOLD}==> Checking target files and directories in %s...${RESET}\n" "$HOME"
 EXISTING_TARGETS=""
+CONFLICTING_FILES=""
 
 is_already_stowed() {
     target_path="$1"
@@ -115,12 +116,12 @@ for pkg_dir in "$DOTFILES_DIR"/*/; do
             ;;
     esac
 
+    # Check top-level items and subdirectories
     for item in "$pkg_dir"/* "$pkg_dir"/.[!.]*; do
         [ -e "$item" ] || continue
         rel_path="${item#$pkg_dir/}"
         target="$HOME/$rel_path"
 
-        # Check subdirectories for .config (e.g. .config/git, .config/zsh)
         if [ "$rel_path" = ".config" ] && [ -d "$item" ]; then
             for sub_item in "$item"/*; do
                 [ -e "$sub_item" ] || continue
@@ -140,17 +141,40 @@ for pkg_dir in "$DOTFILES_DIR"/*/; do
             fi
         fi
     done
+
+    # Check for direct conflicting regular files (e.g. non-symlink .zshrc)
+    while IFS= read -r src_file; do
+        [ -n "$src_file" ] || continue
+        rel_file="${src_file#$pkg_dir/}"
+        dest_file="$HOME/$rel_file"
+        if [ -f "$dest_file" ] && [ ! -L "$dest_file" ]; then
+            CONFLICTING_FILES="${CONFLICTING_FILES}$dest_file\n"
+        fi
+    done <<EOF
+$(find "$pkg_dir" -type f 2>/dev/null)
+EOF
 done
 
-if [ -n "$EXISTING_TARGETS" ]; then
+if [ -n "$EXISTING_TARGETS" ] || [ -n "$CONFLICTING_FILES" ]; then
     printf "${YELLOW}${BOLD}⚠️  Warning: The following target directories/files already exist in \$HOME:${RESET}\n"
-    printf "$EXISTING_TARGETS\n"
-    printf "Stow will link your dotfiles into or over these existing locations.\n"
+    if [ -n "$EXISTING_TARGETS" ]; then
+        printf "$EXISTING_TARGETS"
+    fi
+    if [ -n "$CONFLICTING_FILES" ]; then
+        printf "$CONFLICTING_FILES" | sed 's/^/  - /'
+    fi
+    printf "\nStow will link your dotfiles into or over these existing locations.\n"
     printf "${BOLD}Do you want to continue and override/link them? [y/N] ${RESET}"
     read -r PROCEED_OVERRIDE
     case "$PROCEED_OVERRIDE" in
         [yY]|[yY][eE][sS])
             printf "${YELLOW}Proceeding with symlinks...${RESET}\n"
+            # Remove any conflicting regular files so stow can create clean symlinks
+            if [ -n "$CONFLICTING_FILES" ]; then
+                printf "%b" "$CONFLICTING_FILES" | while IFS= read -r f; do
+                    [ -f "$f" ] && [ ! -L "$f" ] && rm -f "$f"
+                done
+            fi
             ;;
         *)
             printf "\n${RED}Setup aborted by user.${RESET}\n\n"
@@ -176,5 +200,27 @@ for dir in "$DOTFILES_DIR"/*/; do
     stow -d "$DOTFILES_DIR" -t "$HOME" -R "$package"
     printf "${GREEN}done${RESET}\n"
 done
+
+# 5. Prompt to set Zsh as default shell if needed
+ZSH_BIN="$(which zsh 2>/dev/null || echo "")"
+CURRENT_SHELL_NAME="$(basename "${SHELL:-}" 2>/dev/null || echo "")"
+
+if [ -n "$ZSH_BIN" ] && [ "$CURRENT_SHELL_NAME" != "zsh" ]; then
+    printf "\n${YELLOW}${BOLD}Current default shell is: %s${RESET}\n" "${SHELL:-unknown}"
+    printf "${BOLD}Do you want to set Zsh as your default shell (chsh -s %s)? [y/N] ${RESET}" "$ZSH_BIN"
+    read -r SET_ZSH
+    case "$SET_ZSH" in
+        [yY]|[yY][eE][sS])
+            if chsh -s "$ZSH_BIN"; then
+                printf "${GREEN}✓ Default shell changed to %s.${RESET}\n" "$ZSH_BIN"
+            else
+                printf "${RED}[WARN] Could not change shell automatically. You can run manually: chsh -s %s${RESET}\n" "$ZSH_BIN"
+            fi
+            ;;
+        *)
+            printf "Keeping current default shell.\n"
+            ;;
+    esac
+fi
 
 printf "\n${GREEN}${BOLD}✓ Setup complete! All configurations are linked.${RESET}\n\n"
