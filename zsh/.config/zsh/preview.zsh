@@ -35,7 +35,7 @@ local filename="${target:t:l}"
 local mime
 mime=$(file --mime-type -bL "$target" 2>/dev/null || echo "")
 
-# Helper to render images using Kitty icat protocol with offset support
+# Helper to render images using Kitty icat protocol with unicode placeholder
 display_image() {
     local img="$1"
     local top_offset="${2:-0}"
@@ -47,7 +47,8 @@ display_image() {
     fi
 
     if command -v kitty >/dev/null 2>&1; then
-        kitty +kitten icat --clear --transfer-mode=memory --stdin=no --align center --place="${cols}x${available_lines}@0x${top_offset}" "$img"
+        local dim="${cols}x${available_lines}"
+        kitty +kitten icat --clear --transfer-mode=memory --unicode-placeholder --stdin=no --align center --place="$dim@0x0" "$img" | sed '$d' | sed $'$s/$/\e[m/'
     else
         file -b "$img"
         if command -v sips >/dev/null 2>&1; then
@@ -182,18 +183,25 @@ if [[ "$is_video" == true ]]; then
     [[ -n "$formatted_duration" ]] && info_line="${info_line} • ${formatted_duration}"
     [[ -n "$formatted_size" ]] && info_line="${info_line} • ${formatted_size}"
 
-    echo -e "\033[1;35m🎬 ${info_line} \033[36m(frame at 25%)\033[0m"
+    echo -e "\033[1;35m🎬 ${info_line}\033[0m"
     echo -e "\033[90m────────────────────────────────────────────────────────────\033[0m"
 
     local header_lines=2
 
-    # Extract silent thumbnail preview at 25% if ffmpeg is available
+    # Extract silent thumbnail preview at 25% with cache if ffmpeg is available
     if command -v ffmpeg >/dev/null 2>&1; then
-        local thumb="/tmp/fzf-vthumb-$$.jpg"
-        ffmpeg -ss "$seek_time" -i "$target" -vframes 1 -f image2 -y "$thumb" >/dev/null 2>&1
+        local cache_dir="/tmp/fzf-vthumb-cache"
+        mkdir -p "$cache_dir"
+        local file_stat
+        file_stat=$(stat -f "%m-%z" "$target" 2>/dev/null || stat -c "%Y-%s" "$target" 2>/dev/null || echo "0")
+        local thumb="$cache_dir/${target:t:r}_${file_stat}.jpg"
+
+        if [[ ! -f "$thumb" ]]; then
+            ffmpeg -ss "$seek_time" -i "$target" -vframes 1 -f image2 -y "$thumb" >/dev/null 2>&1
+        fi
+
         if [[ -f "$thumb" ]]; then
             display_image "$thumb" "$header_lines"
-            rm -f "$thumb"
         fi
     fi
     exit 0
