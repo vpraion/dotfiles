@@ -108,6 +108,9 @@ alias glo='git log --oneline -n 15'
 # [git push] Update remote refs along with associated objects
 alias gp='git push'
 
+# [git fetch] Fetches the remote repository status
+alias gf='git fetch'
+
 # [git pull] Fetch from and integrate with another repository or branch
 alias gpl='git pull'
 
