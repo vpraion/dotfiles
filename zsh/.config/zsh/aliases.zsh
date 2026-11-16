@@ -125,6 +125,12 @@ alias gst='git stash'
 # [git stash pop] Remove a single stashed state and apply it to current working tree
 alias gstp='git stash pop'
 
+# [git stash drop] Delete the latest stash
+alias gstd='git stash drop'
+
+# [git stash clear] Delete all stashes
+alias gstclr='git stash clear'
+
 # [git reset --soft HEAD~1] Undo the last commit while keeping changes in the staging area
 alias guncommit='git reset --soft HEAD~1'
 

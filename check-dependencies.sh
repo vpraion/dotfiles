@@ -37,7 +37,6 @@ check_dep "zoxide" "zoxide"
 check_dep "nvim" "nvim"
 check_dep "starship" "starship"
 check_dep "kitty" "kitty"
-check_dep "ffmpeg" "ffmpeg"
 check_dep "ffprobe" "ffmpeg"
 check_dep "col" "col"
 
