@@ -67,13 +67,12 @@ Each top-level directory mirrors the destination layout relative to `$HOME`:
 | [ripgrep](https://github.com/burntsushi/ripgrep) | Fast `grep` replacement |
 | [zoxide](https://github.com/ajeetdsouza/zoxide) | Smarter directory navigation |
 | [nvim](https://neovim.io/) | Text editor |
-
+| [col](https://linuxcommandlibrary.com/man/col) | Utlized by `MANPAGER` configuration |
 ### Optional
 
 | Tool | Purpose |
 | :--- | :--- |
 | [kitty](https://sw.kovidgoyal.net/kitty/) | GPU-accelerated terminal emulator |
-| `col` | Utilized by `MANPAGER` configuration |
 
 ---
 
