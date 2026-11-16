@@ -35,14 +35,19 @@ local filename="${target:t:l}"
 local mime
 mime=$(file --mime-type -bL "$target" 2>/dev/null || echo "")
 
-# Helper to render images using Kitty icat protocol
+# Helper to render images using Kitty icat protocol with offset support
 display_image() {
     local img="$1"
+    local top_offset="${2:-0}"
     local cols="${FZF_PREVIEW_COLUMNS:-80}"
-    local lines="${FZF_PREVIEW_LINES:-30}"
+    local total_lines="${FZF_PREVIEW_LINES:-30}"
+    local available_lines=$(( total_lines - top_offset ))
+    if (( available_lines < 3 )); then
+        available_lines=3
+    fi
 
     if command -v kitty >/dev/null 2>&1; then
-        kitty +kitten icat --clear --transfer-mode=memory --stdin=no --align center --place="${cols}x${lines}@0x0" "$img"
+        kitty +kitten icat --clear --transfer-mode=memory --stdin=no --align center --place="${cols}x${available_lines}@0x${top_offset}" "$img"
     else
         file -b "$img"
         if command -v sips >/dev/null 2>&1; then
@@ -106,46 +111,93 @@ fi
 # 4. Images (Kitty icat)
 case "$mime" in
     image/*)
-        display_image "$target"
+        display_image "$target" 0
         exit 0
         ;;
 esac
 
 case "$filename" in
     *.png|*.jpg|*.jpeg|*.gif|*.webp|*.svg|*.bmp|*.ico)
-        display_image "$target"
+        display_image "$target" 0
         exit 0
         ;;
 esac
 
-# 5. Videos (metadata + frame thumbnail without sound)
+# 5. Videos (metadata + frame thumbnail at 25% without sound)
+local is_video=false
 case "$mime" in
-    video/*)
-        clear_graphics
-        echo -e "\033[1;35m🎬 Video Information\033[0m\n"
-        if command -v ffprobe >/dev/null 2>&1; then
-            ffprobe -v error -select_streams v:0 \
-                -show_entries stream=width,height,codec_name,r_frame_rate \
-                -show_entries format=duration,size,bit_rate \
-                -of default=noprint_wrappers=1 "$target" 2>/dev/null
-            echo ""
-        else
-            file -b "$target"
-        fi
+    video/*) is_video=true ;;
+esac
+case "$filename" in
+    *.mp4|*.mkv|*.mov|*.avi|*.webm|*.flv|*.m4v) is_video=true ;;
+esac
 
-        # Extract silent thumbnail preview if ffmpeg is available
-        if command -v ffmpeg >/dev/null 2>&1; then
-            local thumb="/tmp/fzf-vthumb-$$.jpg"
-            ffmpeg -ss 00:00:01 -i "$target" -vframes 1 -f image2 -y "$thumb" >/dev/null 2>&1
-            if [[ -f "$thumb" ]]; then
-                echo -e "\033[1;36mFrame Thumbnail (00:00:01):\033[0m"
-                display_image "$thumb"
-                rm -f "$thumb"
+if [[ "$is_video" == true ]]; then
+    clear_graphics
+
+    local width="" height="" codec="" duration_raw="" size_bytes=""
+    local formatted_duration="" formatted_size="" seek_time="00:00:01"
+
+    if command -v ffprobe >/dev/null 2>&1; then
+        width=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of default=noprint_wrappers=1:nokey=1 "$target" 2>/dev/null)
+        height=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of default=noprint_wrappers=1:nokey=1 "$target" 2>/dev/null)
+        codec=$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "$target" 2>/dev/null)
+        duration_raw=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$target" 2>/dev/null)
+        size_bytes=$(ffprobe -v error -show_entries format=size -of default=noprint_wrappers=1:nokey=1 "$target" 2>/dev/null)
+
+        # Calculate 25% seek time and format duration
+        if [[ -n "$duration_raw" && "$duration_raw" != "N/A" ]]; then
+            local dur_float=${duration_raw}
+            local quarter_sec=$(( dur_float * 0.25 ))
+            seek_time=$(printf "%.2f" "$quarter_sec")
+
+            local total_secs=${duration_raw%.*}
+            local hrs=$(( total_secs / 3600 ))
+            local mins=$(( (total_secs % 3600) / 60 ))
+            local secs=$(( total_secs % 60 ))
+            if (( hrs > 0 )); then
+                formatted_duration=$(printf "%02d:%02d:%02d" "$hrs" "$mins" "$secs")
+            else
+                formatted_duration=$(printf "%02d:%02d" "$mins" "$secs")
             fi
         fi
-        exit 0
-        ;;
-esac
+
+        # Format human-readable size
+        if [[ -n "$size_bytes" && "$size_bytes" != "N/A" ]]; then
+            if (( size_bytes > 1073741824 )); then
+                formatted_size=$(printf "%.1f GB" "$(( size_bytes / 1073741824.0 ))")
+            elif (( size_bytes > 1048576 )); then
+                formatted_size=$(printf "%.1f MB" "$(( size_bytes / 1048576.0 ))")
+            elif (( size_bytes > 1024 )); then
+                formatted_size=$(printf "%.1f KB" "$(( size_bytes / 1024.0 ))")
+            fi
+        fi
+    fi
+
+    # Print compact 2-line header
+    local res="${width}x${height}"
+    [[ -z "$width" ]] && res="Video"
+    local info_line="${res}"
+    [[ -n "$codec" ]] && info_line="${info_line} • ${codec}"
+    [[ -n "$formatted_duration" ]] && info_line="${info_line} • ${formatted_duration}"
+    [[ -n "$formatted_size" ]] && info_line="${info_line} • ${formatted_size}"
+
+    echo -e "\033[1;35m🎬 ${info_line} \033[36m(frame at 25%)\033[0m"
+    echo -e "\033[90m────────────────────────────────────────────────────────────\033[0m"
+
+    local header_lines=2
+
+    # Extract silent thumbnail preview at 25% if ffmpeg is available
+    if command -v ffmpeg >/dev/null 2>&1; then
+        local thumb="/tmp/fzf-vthumb-$$.jpg"
+        ffmpeg -ss "$seek_time" -i "$target" -vframes 1 -f image2 -y "$thumb" >/dev/null 2>&1
+        if [[ -f "$thumb" ]]; then
+            display_image "$thumb" "$header_lines"
+            rm -f "$thumb"
+        fi
+    fi
+    exit 0
+fi
 
 # 6. Plain text, code, configs (bat)
 if [[ "$mime" =~ "^text/" || "$mime" == "application/json" || "$mime" == "application/xml" || "$mime" == "application/javascript" || -z "$mime" ]]; then
