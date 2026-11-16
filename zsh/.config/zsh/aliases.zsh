@@ -12,7 +12,7 @@ alias la='eza -lahg --icons --git'
 # [eza --tree --icons] Tree view
 alias tree='eza --tree --icons'
 
-# [bat] Cat to Bat
+# [bat] cat to bat
 alias cat='bat'
 
 # Use ls completion rules for eza (command options and arguments).
