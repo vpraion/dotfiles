@@ -1,6 +1,6 @@
 # Dotfiles
 
-Minimalist, portable, and modern dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/) and following the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html).
+My minimalist, portable, and modern dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/) and following the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html).
 
 ---
 
