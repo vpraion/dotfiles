@@ -17,7 +17,7 @@ export FZF_DEFAULT_OPTS='
   --preview-window=right:65%:wrap:border-left
 '
 
-export _FZF_PREVIEW_CMD='bat --color=always --style=plain,numbers --line-range=:500 {}'
+export _FZF_PREVIEW_CMD="${ZDOTDIR:-$HOME/.config/zsh}/preview.zsh {}"
 export FZF_CTRL_T_OPTS="--preview '$_FZF_PREVIEW_CMD'"
 
 # Ctrl+F: file picker excluding hidden files
@@ -26,6 +26,7 @@ _fzf_file_no_hidden() {
   cmd="${FZF_DEFAULT_COMMAND/--hidden /}"
   result=$(eval "${cmd:-find . -type f}" | fzf --preview "$_FZF_PREVIEW_CMD") \
     && LBUFFER+="$result"  # LBUFFER is the text left of the cursor
+  [[ -n "$KITTY_WINDOW_ID" || "$TERM" == *kitty* ]] && printf "\033_Ga=d,d=A\033\\"
   zle reset-prompt
 }
 zle -N _fzf_file_no_hidden
@@ -42,6 +43,7 @@ fif() {
         --preview='bat --color=always --style=numbers --highlight-line {2} {1}' \
         --preview-window='right:60%:+{2}-5' \
         --prompt='Search text > ')
+  [[ -n "$KITTY_WINDOW_ID" || "$TERM" == *kitty* ]] && printf "\033_Ga=d,d=A\033\\"
 
   if [[ -n "$selection" ]]; then
     file=$(echo "$selection" | cut -d: -f1)
@@ -59,6 +61,7 @@ _fzf_grep() {
         --preview='bat --color=always --style=numbers --highlight-line {2} {1}' \
         --preview-window='right:60%:+{2}-5' \
         --prompt='Grep > ')
+  [[ -n "$KITTY_WINDOW_ID" || "$TERM" == *kitty* ]] && printf "\033_Ga=d,d=A\033\\"
 
   if [[ -n "$selection" ]]; then
     file=$(echo "$selection" | cut -d: -f1)

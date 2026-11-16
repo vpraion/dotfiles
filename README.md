@@ -67,13 +67,16 @@ Each top-level directory mirrors the destination layout relative to `$HOME`:
 | [ripgrep](https://github.com/burntsushi/ripgrep) | Fast `grep` replacement              |
 | [zoxide](https://github.com/ajeetdsouza/zoxide)  | Smarter directory navigation         |
 | [nvim](https://neovim.io/)                       | Text editor                          |
+| [kitty](https://sw.kovidgoyal.net/kitty/)       | GPU-accelerated terminal emulator    |
 | [starship](https://starship.rs/)                 | Cross-shell customizable prompt      |
+| [ffmpeg](https://ffmpeg.org/) (with `ffprobe`)   | Video metadata inspection & preview  |
 | [col](https://linuxcommandlibrary.com/man/col)   | Utilized by `MANPAGER` configuration |
+
 ### Optional
 
-| Tool                                      | Purpose                           |
-| :---------------------------------------- | :-------------------------------- |
-| [kitty](https://sw.kovidgoyal.net/kitty/) | GPU-accelerated terminal emulator |
+| Tool | Purpose |
+| :--- | :--- |
+| [poppler](https://poppler.freedesktop.org/) (`pdftotext`) | In-terminal text extraction & preview for PDF files |
 
 ---
 
