@@ -72,5 +72,8 @@ source "$ZDOTDIR/zoxide.zsh"
 # Background Git auto-fetch
 source "$ZDOTDIR/git-fetch.zsh"
 
+# Sudo wrapper
+source "$ZDOTDIR/sudo.zsh"
+
 # Custom keybindngs
 source "$ZDOTDIR/bindings.zsh"

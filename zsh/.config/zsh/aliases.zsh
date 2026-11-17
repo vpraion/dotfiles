@@ -33,7 +33,16 @@ alias df='df -h'
 alias vim='nvim'
 
 # [vim] Open Neovim editor
-alias vi='vim'
+alias vi='nvim'
+
+# [nano] Forbid nano for the meantime
+alias nano='nvim'
+
+# [sudo -e] Edit file securely with user editor using sudo privileges
+alias sudoedit='sudo -e'
+
+# [sudo -e] Edit file securely with user editor using sudo privileges
+alias svi='sudo -e'
 
 # [mdcat -p --margin --emoji] View rendered markdown file
 alias mdcat='mdcat -p --margin --emoji'
