@@ -27,6 +27,9 @@ zvm_after_init() {
 	# Ctrl+G -> fzf ripgrep interactive content search
 	bindkey '^G' _fzf_grep
 
+	# Ctrl+Space -> fzf alias helper
+	bindkey '^@' _alias_helper_widget
+
 	# Ctrl+\ -> toggle autosuggestions
 	bindkey '^\' autosuggest-toggle
 
@@ -34,6 +37,6 @@ zvm_after_init() {
 	bindkey '^[[A' history-substring-search-up
 	bindkey '^[[B' history-substring-search-down
 	
-	#Alt+c -> go to a folder known by zoxyde
-	bindkey '^[c' _zoxide_fzf_widget
+	# Ctrl+O -> jump to a folder known by zoxide
+	bindkey '^O' _zoxide_fzf_widget
 }

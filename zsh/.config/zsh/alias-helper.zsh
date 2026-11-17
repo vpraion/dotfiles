@@ -1,6 +1,6 @@
-# Interactive alias finder and helper (al)
+# Interactive alias finder and helper (alias-helper)
 
-al() {
+alias-helper() {
     local aliases_file="${ZDOTDIR:-$HOME/.config/zsh}/aliases.zsh"
 
     if [[ ! -f "$aliases_file" ]]; then
@@ -45,7 +45,21 @@ al() {
         # Extract clean alias name (strip ANSI color escape codes and trailing whitespace)
         alias_name=$(echo "$selected" | awk -F'│' '{print $1}' | sed $'s/\x1b\\[[0-9;]*m//g' | tr -d '[:space:]')
         if [[ -n "$alias_name" ]]; then
-            print -z "$alias_name "
+            if [[ -n "$WIDGET" ]]; then
+                LBUFFER+="$alias_name "
+            else
+                print -z "$alias_name "
+            fi
         fi
     fi
 }
+
+# Alias for quick CLI access
+alias al='alias-helper'
+
+# ZLE widget for interactive alias helper
+_alias_helper_widget() {
+    alias-helper
+    zle reset-prompt
+}
+zle -N _alias_helper_widget
