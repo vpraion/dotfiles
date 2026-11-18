@@ -2,3 +2,8 @@
 	path = nvim
 	url = git@github.com:vpraion/nvim.git
 	branch = main
+
+[submodule "zsh"]
+	path = zsh
+	url = git@github.com:vpraion/zsh.git
+	branch = main
