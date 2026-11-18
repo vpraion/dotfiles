@@ -19,7 +19,13 @@ if [ -f "$DOTFILES_DIR/check-dependencies.sh" ]; then
     "$DOTFILES_DIR/check-dependencies.sh" || exit 1
 fi
 
-# 2. Git identity configuration (config.local)
+# 2. Initialize and update submodules
+if [ -d "$DOTFILES_DIR/.git" ]; then
+    printf "\n${BOLD}==> Initializing Git submodules...${RESET}\n"
+    git -C "$DOTFILES_DIR" submodule update --init --recursive
+fi
+
+# 3. Git identity configuration (config.local)
 GIT_CONFIG_DIR="$DOTFILES_DIR/git/.config/git"
 GIT_LOCAL_CONFIG="$GIT_CONFIG_DIR/config.local"
 
@@ -78,7 +84,7 @@ EOF
     fi
 fi
 
-# 3. Check for existing directories or conflicting files in $HOME
+# 4. Check for existing directories or conflicting files in $HOME
 printf "\n${BOLD}==> Checking target files and directories in %s...${RESET}\n" "$HOME"
 EXISTING_TARGETS=""
 CONFLICTING_FILES=""
@@ -183,7 +189,7 @@ if [ -n "$EXISTING_TARGETS" ] || [ -n "$CONFLICTING_FILES" ]; then
     esac
 fi
 
-# 4. Stow all packages into $HOME
+# 5. Stow all packages into $HOME
 printf "\n${BOLD}==> Stowing packages to %s...${RESET}\n" "$HOME"
 
 for dir in "$DOTFILES_DIR"/*/; do
@@ -201,7 +207,7 @@ for dir in "$DOTFILES_DIR"/*/; do
     printf "${GREEN}done${RESET}\n"
 done
 
-# 5. Prompt to set Zsh as default shell if needed
+# 6. Prompt to set Zsh as default shell if needed
 ZSH_BIN="$(which zsh 2>/dev/null || echo "")"
 CURRENT_SHELL_NAME="$(basename "${SHELL:-}" 2>/dev/null || echo "")"
 

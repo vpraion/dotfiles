@@ -16,9 +16,10 @@ cd ~/.dotfiles
 
 The `setup.sh` script will:
 1. Verify required dependencies using `./check-dependencies.sh`.
-2. Configure your Git identity in a local, unversioned `config.local` (keeping the repository clean).
-3. Safely check for existing files/directories in `$HOME` before linking.
-4. Symlink all configuration packages into your `$HOME` directory using `stow`.
+2. Initialize and clone any Git submodules (e.g. `nvim`).
+3. Configure your Git identity in a local, unversioned `config.local` (keeping the repository clean).
+4. Safely check for existing files/directories in `$HOME` before linking.
+5. Symlink all configuration packages into your `$HOME` directory using `stow`.
 
 ---
 

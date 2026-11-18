@@ -1,3 +1,2 @@
 .DS_Store
 *.local
-nvim/.config/nvim/lua/plugins/*
