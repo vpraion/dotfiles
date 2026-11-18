@@ -23,6 +23,8 @@ fi
 if [ -d "$DOTFILES_DIR/.git" ]; then
     printf "\n${BOLD}==> Initializing Git submodules...${RESET}\n"
     git -C "$DOTFILES_DIR" submodule update --init --recursive
+    printf "\n${BOLD}==> Updating Git submodules...${RESET}\n"
+    git submodule update --remote
 fi
 
 # 3. Git identity configuration (config.local)
