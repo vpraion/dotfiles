@@ -14,3 +14,11 @@
 	path = kitty
 	url = git@github.com:vpraion/kitty.git
 	branch = main
+[submodule "hypr"]
+	path = hypr
+	url = git@github.com:vpraion/hypr.git
+  branch = main
+[submodule "btop"]
+	path = btop
+	url = git@github.com:vpraion/btop.git
+  branch = main
