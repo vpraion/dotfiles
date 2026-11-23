@@ -17,8 +17,12 @@
 [submodule "hypr"]
 	path = hypr
 	url = git@github.com:vpraion/hypr.git
-  branch = main
+  	branch = main
 [submodule "btop"]
 	path = btop
 	url = git@github.com:vpraion/btop.git
-  branch = main
+  	branch = main
+[submodule "nix"]
+	path = nix
+	url = git@github.com:vpraion/nix.git
+	branch = main
