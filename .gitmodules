@@ -26,3 +26,11 @@
 	path = nix
 	url = git@github.com:vpraion/nix.git
 	branch = main
+[submodule "OpenRGB"]
+	path = OpenRGB
+	url = git@github.com:vpraion/OpenRGB.git
+  branch = main
+[submodule "coolercontrol"]
+	path = coolercontrol
+	url = git@github.com:vpraion/coolercontrol.git
+  branch = main
